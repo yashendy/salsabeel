@@ -541,6 +541,15 @@ function showOnlineQuestionToGuest(qText, qOpts, duration) {
     hasAnsweredCurrentQuestion = false;
     document.getElementById('quiz-question-text').innerText = qText;
     
+    // إرشاد اللاعبين في شريط الحالة
+    document.getElementById('game-status-message').innerText = "💡 اقرأ السؤال وأجب بسرعة لتتقدم خطوات أكثر للأمام!";
+    
+    // التأكد من وجود الخيارات وتفادي أي خطأ غير متوقع
+    if (!qOpts || !Array.isArray(qOpts) || qOpts.length < 4) {
+        console.error("Malformed options received:", qOpts);
+        qOpts = ["خيار 1", "خيار 2", "خيار 3", "خيار 4"];
+    }
+    
     // تعبئة الخيارات الأربعة
     for (let i = 0; i < 4; i++) {
         const btn = document.getElementById(`opt-${i}`);
@@ -771,6 +780,18 @@ function showQuizRoundResults(updatedPlayers, results) {
     gamePlayers.forEach(p => {
         movePlayerOnVisualPath(p.id, p.position);
     });
+    
+    // عرض ملخص نتائج الجولة في شريط الحالة للجميع لمتابعة بعضهم البعض
+    let statusText = "النتائج: ";
+    const resultStrings = gamePlayers.map(p => {
+        const res = results[p.id];
+        if (res) {
+            return `${p.name} ${res.isCorrect ? '✅ (+'+res.stepsMoved+')' : '❌'}`;
+        }
+        return `${p.name} 💤`;
+    });
+    statusText += resultStrings.join(" | ");
+    document.getElementById('game-status-message').innerText = statusText;
 }
 
 // خروج المضيف وإعادة تصفير اللعبة
