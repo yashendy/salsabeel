@@ -605,9 +605,7 @@ function setupGameBoardUI() {
     // محاذاة البداية لجميع اللاعبين
     setTimeout(() => {
         gamePlayers.forEach(p => movePlayerOnVisualPath(p.id, 0));
-        if (isLocalGame) {
-            updateActivePlayerTurnDisplay();
-        }
+        updateActivePlayerTurnDisplay();
     }, 100);
 }
 

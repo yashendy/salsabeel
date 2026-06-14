@@ -135,24 +135,34 @@ function handleDataFromGuest(peerId, data) {
     console.log('Host received data:', data);
     
     if (data.type === 'join_request') {
-        // فحص هل الاسم مكرر أو الشخصية مأخوذة
-        let finalName = data.name;
-        if (gamePlayers.some(p => p.name === finalName) || finalName === myPlayerName) {
-            finalName = finalName + ' (2)';
+        // فحص ما إذا كان اللاعب موجوداً بالفعل بالمعرف لتحديث بياناته فقط دون إضافة مكرر
+        let existingPlayer = gamePlayers.find(p => p.id === peerId);
+        
+        if (existingPlayer) {
+            // تحديث الاسم والرمز التعبيري فقط دون تغيير أي شيء آخر
+            existingPlayer.name = data.name;
+            existingPlayer.avatar = data.avatar;
+            existingPlayer.color = AVATARS[data.avatar].color;
+        } else {
+            // فحص هل الاسم مكرر أو الشخصية مأخوذة
+            let finalName = data.name;
+            if (gamePlayers.some(p => p.name === finalName) || finalName === myPlayerName) {
+                finalName = finalName + ' (2)';
+            }
+            
+            const newPlayer = {
+                id: peerId,
+                name: finalName,
+                avatar: data.avatar,
+                color: AVATARS[data.avatar].color,
+                position: 0,
+                score: 0,
+                answered: false,
+                lastAnswerCorrect: false
+            };
+            
+            gamePlayers.push(newPlayer);
         }
-        
-        const newPlayer = {
-            id: peerId,
-            name: finalName,
-            avatar: data.avatar,
-            color: AVATARS[data.avatar].color,
-            position: 0,
-            score: 0,
-            answered: false,
-            lastAnswerCorrect: false
-        };
-        
-        gamePlayers.push(newPlayer);
         broadcastLobbyState();
     }
     
