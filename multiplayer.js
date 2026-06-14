@@ -401,7 +401,10 @@ function handleDataFromHost(data) {
     }
     
     if (data.type === 'next_question_sync') {
-        showOnlineQuestionToGuest(data.question, data.options, data.timeLimit);
+        // فك ترميز السؤال والخيارات لتفادي مشاكل الحروف والرموز التعبيرية في الهواتف
+        const decodedQuestion = decodeURIComponent(data.question);
+        const decodedOptions = data.options.map(opt => decodeURIComponent(opt));
+        showOnlineQuestionToGuest(decodedQuestion, decodedOptions, data.timeLimit);
     }
     
     if (data.type === 'round_results_sync') {
@@ -525,14 +528,18 @@ function sendNextQuestionToAll() {
         p.lastAnswerCorrect = false;
     });
     
+    // ترميز السؤال والخيارات لتفادي مشاكل الفك والترميز ثنائي البايت (مثل الرموز التعبيرية 🍌) عبر الشبكة في الهواتف
+    const encodedQuestion = encodeURIComponent(currentQuizQuestion.question);
+    const encodedOptions = currentQuizQuestion.options.map(opt => encodeURIComponent(opt));
+    
     broadcastToAll({
         type: 'next_question_sync',
-        question: currentQuizQuestion.question,
-        options: currentQuizQuestion.options,
+        question: encodedQuestion,
+        options: encodedOptions,
         timeLimit: TOTAL_QUESTION_TIME
     });
     
-    // تشغيل محلي للمضيف
+    // تشغيل محلي للمضيف (بدون ترميز)
     showOnlineQuestionToGuest(currentQuizQuestion.question, currentQuizQuestion.options, TOTAL_QUESTION_TIME);
 }
 
