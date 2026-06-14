@@ -695,6 +695,8 @@ function enableDiceButton(enabled) {
 function rollDice() {
     if (isDiceRolling) return;
     
+    const rollingIdx = activePlayerIndex;
+    
     isDiceRolling = true;
     playRollSound();
     
@@ -717,7 +719,7 @@ function rollDice() {
         
         setTimeout(() => {
             isDiceRolling = false;
-            advanceActivePlayer(finalDiceValue);
+            advancePlayerByIdx(rollingIdx, finalDiceValue);
         }, 300); // وقت انتظار بعد التوقف للاستقرار البصري
         
     }, 600); // مدة الدوران العشوائي للنرد
@@ -739,9 +741,9 @@ function applyDiceRotation(val) {
     dice.style.transform = `rotateX(${rx}deg) rotateY(${ry}deg)`;
 }
 
-// تحريك اللاعب النشط للأمام
-function advanceActivePlayer(steps) {
-    const player = gamePlayers[activePlayerIndex];
+// تحريك لاعب محدد بناءً على مؤشره
+function advancePlayerByIdx(playerIdx, steps) {
+    const player = gamePlayers[playerIdx];
     if (!player) return;
     
     playJumpSound();
@@ -764,12 +766,17 @@ function advanceActivePlayer(steps) {
     } else {
         // في الأونلاين المضيف هو من يحدد ويوجه الدور التالي ومزامنة البيانات
         if (isHost) {
-            activePlayerIndex = (activePlayerIndex + 1) % gamePlayers.length;
+            activePlayerIndex = (playerIdx + 1) % gamePlayers.length;
             setTimeout(() => {
                 broadcastGameState();
             }, 1000);
         }
     }
+}
+
+// تحريك اللاعب النشط للأمام
+function advanceActivePlayer(steps) {
+    advancePlayerByIdx(activePlayerIndex, steps);
 }
 
 // ================= إعلان الفائز والاحتفال بالـ Confetti =================

@@ -163,6 +163,9 @@ function handleDataFromGuest(peerId, data) {
             value: data.value,
             playerIdx: activePlayerIndex
         });
+        
+        // المضيف يحتاج أيضاً إلى تشغيل الحركة وتحديث حالة اللعبة محلياً وبث النتيجة
+        syncDiceRollAnimation(data.value, activePlayerIndex);
     }
     
     if (data.type === 'answer_submitted') {
@@ -304,7 +307,12 @@ function handleDataFromHost(data) {
     if (data.type === 'dice_roll_sync') {
         // مزامنة رمية النرد
         activePlayerIndex = data.playerIdx;
-        syncDiceRollAnimation(data.value);
+        
+        // تشغيل الحركة فقط للضيوف الآخرين، وليس للاعب الذي رمى النرد بالفعل محلياً
+        const rollingPlayer = gamePlayers[data.playerIdx];
+        if (rollingPlayer && rollingPlayer.id !== myPeerId) {
+            syncDiceRollAnimation(data.value, data.playerIdx);
+        }
     }
     
     if (data.type === 'game_state_sync') {
@@ -361,8 +369,10 @@ function sendDiceRollToPeers(val) {
 }
 
 // مزامنة حركة النرد البصرية لجميع اللاعبين
-function syncDiceRollAnimation(val) {
+function syncDiceRollAnimation(val, playerIdx) {
     if (isDiceRolling) return;
+    
+    const rollingIdx = playerIdx !== undefined ? playerIdx : activePlayerIndex;
     
     isDiceRolling = true;
     playRollSound();
@@ -376,8 +386,8 @@ function syncDiceRollAnimation(val) {
         
         setTimeout(() => {
             isDiceRolling = false;
-            // تحريك اللاعب بناءً على الرقم
-            advanceActivePlayer(val);
+            // تحريك اللاعب بناءً على الرقم والمؤشر المحدد
+            advancePlayerByIdx(rollingIdx, val);
         }, 300);
     }, 600);
 }
