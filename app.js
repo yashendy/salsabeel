@@ -392,6 +392,13 @@ function showScreen(screenId) {
     if (screenId !== 'screen-game-board' && screenId !== 'screen-game-over') {
         stopConfetti();
     }
+    
+    // إذا خرجنا إلى القائمة الرئيسية من لعبة أونلاين، نقوم بتنظيف الاتصال وتصفير الغرفة تلقائياً
+    if (screenId === 'screen-main-menu' && !isLocalGame) {
+        if (typeof leaveLobby === 'function') {
+            leaveLobby();
+        }
+    }
 }
 
 // ================= متغيرات اللعبة وحالتها العامة =================

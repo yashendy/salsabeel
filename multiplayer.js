@@ -829,5 +829,7 @@ function leaveLobby() {
     hostConn = null;
     guestConns = {};
     isHost = false;
+    isLocalGame = true; // إعادة تعيين لوضع اللعب المحلي افتراضياً
+    gamePlayers = [];   // تصفية المتسابقين لتجنب دخول الأسماء القديمة في اللعبة القادمة
     showScreen('screen-main-menu');
 }
