@@ -21,25 +21,20 @@ function createNewRoom() {
     
     if (!myPlayerName) return alert('برجاء كتابة اسمك أولاً!');
     
+    // تصفية مصفوفة اللاعبين السابقة لتجنب دخول أسماء قديمة
+    gamePlayers = [];
+    
+    // تعطيل الزر مؤقتاً لتجنب النقرات المتعددة ولحين نجاح الاتصال
+    const btn = document.querySelector('button[onclick="createNewRoom()"]');
+    if (btn) {
+        btn.disabled = true;
+        btn.innerText = 'جاري إنشاء الغرفة... ⏳';
+    }
+    
     // توليد رمز غرفة عشوائي مكون من 4 أرقام
     const randomCode = Math.floor(1000 + Math.random() * 9000).toString();
     roomCode = randomCode;
     isHost = true;
-    
-    // إعداد المضيف
-    document.getElementById('lobby-room-id-display').innerText = roomCode;
-    document.getElementById('btn-start-online-game').style.display = 'block';
-    document.getElementById('lobby-wait-msg').style.display = 'none';
-    
-    // إظهار اختيار حزمة الأسئلة للمضيف في اللوبي إذا كنا في المستوى الثالث
-    if (currentGameLevel === 3) {
-        document.getElementById('lobby-quiz-set-selection-group').style.display = 'block';
-    } else {
-        document.getElementById('lobby-quiz-set-selection-group').style.display = 'none';
-    }
-    
-    showScreen('screen-lobby');
-    updateLobbyPlayersList([]);
     
     setupPeer(true);
 }
@@ -53,15 +48,18 @@ function joinExistingRoom() {
     if (!myPlayerName) return alert('برجاء كتابة اسمك أولاً!');
     if (!code || code.length !== 4 || isNaN(code)) return alert('برجاء كتابة رمز غرفة صحيح مكون من 4 أرقام!');
     
+    // تصفية مصفوفة اللاعبين السابقة
+    gamePlayers = [];
+    
+    // تعطيل الزر مؤقتاً لتجنب النقرات المتعددة
+    const btn = document.querySelector('button[onclick="joinExistingRoom()"]');
+    if (btn) {
+        btn.disabled = true;
+        btn.innerText = 'جاري الانضمام للسباق... ⏳';
+    }
+    
     roomCode = code;
     isHost = false;
-    
-    document.getElementById('lobby-room-id-display').innerText = roomCode;
-    document.getElementById('btn-start-online-game').style.display = 'none';
-    document.getElementById('lobby-wait-msg').style.display = 'block';
-    
-    showScreen('screen-lobby');
-    updateLobbyPlayersList([]);
     
     setupPeer(false);
 }
@@ -73,23 +71,87 @@ function setupPeer(asHost) {
     
     const peerIdToRegister = asHost ? (PEER_NAMESPACE + roomCode) : null;
     
-    // استخدام الخادم السحابي المجاني الافتراضي لـ PeerJS
+    // استخدام خوادم STUN من جوجل لضمان نجاح الاتصال وتجاوز جدران الحماية
     myPeer = new Peer(peerIdToRegister, {
-        debug: 1
+        debug: 1,
+        secure: true,
+        config: {
+            iceServers: [
+                { urls: 'stun:stun.l.google.com:19302' },
+                { urls: 'stun:stun1.l.google.com:19302' },
+                { urls: 'stun:stun2.l.google.com:19302' },
+                { urls: 'stun:stun3.l.google.com:19302' },
+                { urls: 'stun:stun4.l.google.com:19302' }
+            ]
+        }
     });
     
     myPeer.on('open', (id) => {
         myPeerId = id;
-        if (!asHost) {
-            // كضيف، نقوم بالاتصال بالمضيف
+        
+        // إعادة تهيئة وتفعيل الأزرار
+        const createBtn = document.querySelector('button[onclick="createNewRoom()"]');
+        if (createBtn) {
+            createBtn.disabled = false;
+            createBtn.innerText = 'إنشاء الغرفة 🏠';
+        }
+        const joinBtn = document.querySelector('button[onclick="joinExistingRoom()"]');
+        if (joinBtn) {
+            joinBtn.disabled = false;
+            joinBtn.innerText = 'انضمام للسباق 🏁';
+        }
+        
+        if (asHost) {
+            // كـمضيف، نعرض رمز الغرفة ونفتح شاشة اللوبي الآن بعد نجاح التسجيل على الخادم
+            document.getElementById('lobby-room-id-display').innerText = roomCode;
+            document.getElementById('btn-start-online-game').style.display = 'block';
+            document.getElementById('lobby-wait-msg').style.display = 'block';
+            
+            // إظهار اختيار حزمة الأسئلة للمضيف في اللوبي إذا كنا في المستوى الثالث
+            if (currentGameLevel === 3) {
+                document.getElementById('lobby-quiz-set-selection-group').style.display = 'block';
+            } else {
+                document.getElementById('lobby-quiz-set-selection-group').style.display = 'none';
+            }
+            
+            showScreen('screen-lobby');
+            updateLobbyPlayersList([]);
+        } else {
+            // كضيف، نقوم بالاتصال بالمضيف مباشرة
+            document.getElementById('lobby-room-id-display').innerText = roomCode;
+            document.getElementById('btn-start-online-game').style.display = 'none';
+            document.getElementById('lobby-wait-msg').style.display = 'block';
+            
+            showScreen('screen-lobby');
+            updateLobbyPlayersList([]);
+            
             connectToHost();
         }
     });
     
     myPeer.on('error', (err) => {
         console.error('PeerJS Error:', err);
+        
+        // إعادة تهيئة وتفعيل الأزرار في حالة حدوث خطأ
+        const createBtn = document.querySelector('button[onclick="createNewRoom()"]');
+        if (createBtn) {
+            createBtn.disabled = false;
+            createBtn.innerText = 'إنشاء الغرفة 🏠';
+        }
+        const joinBtn = document.querySelector('button[onclick="joinExistingRoom()"]');
+        if (joinBtn) {
+            joinBtn.disabled = false;
+            joinBtn.innerText = 'انضمام للسباق 🏁';
+        }
+        
         if (err.type === 'unavailable-id') {
-            alert('رمز الغرفة هذا مستخدم حالياً! يرجى إنشاء غرفة أخرى.');
+            alert('رمز الغرفة هذا مستخدم حالياً! يرجى المحاولة مرة أخرى لإنشاء رمز جديد.');
+            showScreen('screen-setup-online');
+        } else if (err.type === 'peer-unavailable') {
+            alert('لم يتم العثور على الغرفة! تأكد من أن منشئ الغرفة متصل بالإنترنت وبدأ الغرفة فعلياً، وأن رمز الغرفة مكتوب بشكل صحيح.');
+            showScreen('screen-setup-online');
+        } else if (err.type === 'network') {
+            alert('خطأ في الشبكة! يرجى التحقق من اتصالك بالإنترنت والمحاولة مجدداً.');
             showScreen('screen-setup-online');
         } else {
             alert('حدث خطأ في الاتصال: ' + err.message);
@@ -133,6 +195,7 @@ function removePlayerOnDisconnect(peerId) {
 
 function handleDataFromGuest(peerId, data) {
     console.log('Host received data:', data);
+    if (!data || !data.type) return;
     
     if (data.type === 'join_request') {
         // فحص ما إذا كان اللاعب موجوداً بالفعل بالمعرف لتحديث بياناته فقط دون إضافة مكرر
@@ -300,6 +363,7 @@ function connectToHost() {
 
 function handleDataFromHost(data) {
     console.log('Guest received data:', data);
+    if (!data || !data.type) return;
     
     if (data.type === 'lobby_update') {
         updateLobbyPlayersList(data.players);
