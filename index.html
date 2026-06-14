@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>سباق الأبطال - لعبة الحظ والذكاء</title>
+    
+    <!-- خطوط جوجل الجميلة والمناسبة للأطفال -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300..700&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+    
+    <!-- مكتبة الاتصال المباشر بين الهواتف PeerJS (محلياً لمنع حجب المتصفح) -->
+    <script src="peerjs.min.js"></script>
+    
+    <!-- ملف الأنماط الخاص باللعبة -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- خلفية كرتونية متحركة (سحاب وعناصر طبيعية) -->
+    <div class="cartoon-background">
+        <div class="cloud cloud-1"></div>
+        <div class="cloud cloud-2"></div>
+        <div class="cloud cloud-3"></div>
+    </div>
+
+    <!-- حاوية اللعبة الرئيسية -->
+    <div class="game-container">
+        
+        <!-- ================= شاشة القائمة الرئيسية ================= -->
+        <section id="screen-main-menu" class="game-screen active">
+            <h1 class="game-title">🏆 سباق الأبطال 🏆</h1>
+            <p class="game-subtitle">لعبة الذكاء والحظ والمغامرة الممتعة</p>
+            
+            <div class="menu-options">
+                <button class="btn btn-primary btn-level" onclick="selectLevel(1)">
+                    <span class="btn-icon">📱</span>
+                    <div class="btn-text">
+                        <h3>المستوى الأول</h3>
+                        <p>على نفس الهاتف (تمرير الجهاز)</p>
+                    </div>
+                </button>
+                
+                <button class="btn btn-secondary btn-level" onclick="selectLevel(2)">
+                    <span class="btn-icon">⚡</span>
+                    <div class="btn-text">
+                        <h3>المستوى الثاني</h3>
+                        <p>أونلاين بأدوار (كل لاعب من موبايله)</p>
+                    </div>
+                </button>
+                
+                <button class="btn btn-accent btn-level" onclick="selectLevel(3)">
+                    <span class="btn-icon">💡</span>
+                    <div class="btn-text">
+                        <h3>المستوى الثالث</h3>
+                        <p>سباق الأسئلة السريع (أونلاين جماعي)</p>
+                    </div>
+                </button>
+            </div>
+
+            <div class="menu-footer-buttons">
+                <button class="btn btn-info" onclick="showScreen('screen-question-manager')">
+                    📝 إدارة وحفظ الأسئلة
+                </button>
+                <button class="btn btn-warning" onclick="showScreen('screen-how-to-play')">
+                    ❓ طريقة اللعب
+                </button>
+            </div>
+        </section>
+
+        <!-- ================= شاشة طريقة اللعب ================= -->
+        <section id="screen-how-to-play" class="game-screen">
+            <h2 class="screen-title">❓ طريقة اللعب</h2>
+            <div class="info-card">
+                <div class="info-item">
+                    <h4>📱 المستوى الأول (نفس الهاتف):</h4>
+                    <p>اكتبوا أسماءكم واختاروا شخصياتكم الكرتونية. في كل دور، يتم تمرير الهاتف للاعب التالي ليرمي النرد ويتقدم بطله في مساره الخاص حتى يصل للنهاية.</p>
+                </div>
+                <div class="info-item">
+                    <h4>⚡ المستوى الثاني (أونلاين بأدوار):</h4>
+                    <p>ينشئ لاعب غرفة ويعطي الرمز لأصدقائه. يدخل الجميع من هواتفهم. كل لاعب يرمي النرد في دوره وتتحرك شخصيته فوراً على شاشات الجميع.</p>
+                </div>
+                <div class="info-item">
+                    <h4>💡 المستوى الثالث (سباق الأسئلة):</h4>
+                    <p>سباق ذكاء وسرعة! يظهر سؤال للجميع في نفس الوقت. صاحب الإجابة الصحيحة يتقدم، وكلما أجبتم أسرع حصلتم على نقاط أكثر وتقدمتم خطوات أكبر للأمام!</p>
+                </div>
+            </div>
+            <button class="btn btn-danger btn-block" onclick="showScreen('screen-main-menu')">عودة للقائمة الرئيسية</button>
+        </section>
+
+        <!-- ================= شاشة إعداد اللاعبين (المستوى 1) ================= -->
+        <section id="screen-setup-local" class="game-screen">
+            <h2 class="screen-title">👥 إعداد المتسابقين</h2>
+            
+            <div class="setup-card">
+                <div class="form-group">
+                    <label>عدد اللاعبين:</label>
+                    <select id="local-player-count" onchange="adjustLocalPlayerInputs()">
+                        <option value="2">لاعبين (2)</option>
+                        <option value="3">3 لاعبين</option>
+                        <option value="4">4 لاعبين</option>
+                        <option value="5">5 لاعبين</option>
+                        <option value="6">6 لاعبين</option>
+                    </select>
+                </div>
+
+                <div id="local-players-list" class="players-inputs-container">
+                    <!-- سيتم توليدها ديناميكياً بواسطة JavaScript -->
+                </div>
+
+                <button class="btn btn-success btn-block" onclick="startLocalGame()">ابدأ السباق! 🏁</button>
+                <button class="btn btn-danger btn-block" onclick="showScreen('screen-main-menu')">إلغاء</button>
+            </div>
+        </section>
+
+        <!-- ================= شاشة إعداد غرف أونلاين (المستوى 2 و 3) ================= -->
+        <section id="screen-setup-online" class="game-screen">
+            <h2 class="screen-title" id="online-setup-title">⚡ غرف اللعب الجماعي</h2>
+            
+            <div class="tabs-container">
+                <button class="tab-btn active" onclick="switchOnlineTab('create')">إنشاء غرفة جديدة</button>
+                <button class="tab-btn" onclick="switchOnlineTab('join')">انضمام لغرفة</button>
+            </div>
+
+            <!-- لوحة إنشاء الغرفة -->
+            <div id="tab-create-room" class="tab-content active">
+                <div class="form-group">
+                    <label for="create-player-name">اسمك الجميل:</label>
+                    <input type="text" id="create-player-name" placeholder="مثال: يوسف، مريم..." max="12">
+                </div>
+                
+                <div class="avatar-selection-container">
+                    <label>اختر بطل السباق الخاص بك:</label>
+                    <div class="avatar-grid" id="create-avatar-grid">
+                        <!-- تولد ديناميكياً -->
+                    </div>
+                </div>
+
+                <!-- خاص بالمستوى الثالث فقط لاختيار حزمة الأسئلة -->
+                <div class="form-group" id="quiz-set-selection-group" style="display: none;">
+                    <label for="online-quiz-set">حزمة الأسئلة للسباق:</label>
+                    <select id="online-quiz-set">
+                        <!-- تملأ ديناميكياً من localStorage -->
+                    </select>
+                </div>
+
+                <button class="btn btn-success btn-block" onclick="createNewRoom()">إنشاء الغرفة 🏠</button>
+            </div>
+
+            <!-- لوحة الانضمام لغرفة -->
+            <div id="tab-join-room" class="tab-content">
+                <div class="form-group">
+                    <label for="join-player-name">اسمك الجميل:</label>
+                    <input type="text" id="join-player-name" placeholder="مثال: يوسف، مريم..." max="12">
+                </div>
+                
+                <div class="avatar-selection-container">
+                    <label>اختر بطل السباق الخاص بك:</label>
+                    <div class="avatar-grid" id="join-avatar-grid">
+                        <!-- تولد ديناميكياً -->
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="join-room-id">رمز الغرفة (Room ID):</label>
+                    <input type="text" id="join-room-id" placeholder="أدخل الرمز هنا (مثال: 5392)" style="text-align: center; letter-spacing: 3px;">
+                </div>
+
+                <button class="btn btn-secondary btn-block" onclick="joinExistingRoom()">انضمام للسباق 🏁</button>
+            </div>
+
+            <button class="btn btn-danger btn-block" onclick="showScreen('screen-main-menu')" style="margin-top: 15px;">عودة للقائمة الرئيسية</button>
+        </section>
+
+        <!-- ================= شاشة الانتظار في الغرفة (Lobby) ================= -->
+        <section id="screen-lobby" class="game-screen">
+            <h2 class="screen-title">⏳ في انتظار الأبطال</h2>
+            
+            <div class="lobby-card">
+                <div class="room-id-badge">
+                    <span>رمز الغرفة الخاص بك:</span>
+                    <h2 id="lobby-room-id-display">-----</h2>
+                    <p class="room-id-hint">شارك هذا الرمز مع أصدقائك ليدخلوا معك في نفس الوقت!</p>
+                </div>
+
+                <div class="connected-players-section">
+                    <h3>المتسابقون المتصلون:</h3>
+                    <div id="lobby-players-list" class="lobby-players-list">
+                        <!-- قائمة اللاعبين المنضمين -->
+                    </div>
+                <div class="form-group" id="lobby-quiz-set-selection-group" style="display: none; width: 100%; margin: 15px 0;">
+                    <label for="lobby-online-quiz-set" style="font-weight: 700; color: #475569; margin-bottom: 5px; display: block; text-align: right; width: 100%;">حزمة الأسئلة للسباق:</label>
+                    <select id="lobby-online-quiz-set" style="width: 100%; padding: 10px 14px; border: 3px solid #e2e8f0; border-radius: 12px; font-family: var(--font-arabic); font-size: 1rem; outline: none; background: white;">
+                        <!-- تملأ ديناميكياً -->
+                    </select>
+                </div>
+
+                <div class="lobby-controls" style="width: 100%;">
+                    <!-- يظهر للمضيف فقط لتشغيل اللعبة -->
+                    <button id="btn-start-online-game" class="btn btn-success btn-block" onclick="startOnlineGame()" style="display: none;">
+                        ابدأ السباق الآن! 🏁
+                    </button>
+                    <p id="lobby-wait-msg" class="lobby-wait-msg">في انتظار قيام منشئ الغرفة ببدء السباق...</p>
+                </div>
+
+                <button class="btn btn-danger btn-block" onclick="leaveLobby()" style="margin-top: 15px;">خروج من الغرفة 🚪</button>
+            </div>
+        </section>
+
+        <!-- ================= شاشة لوحة اللعب والسباق (Game Board) ================= -->
+        <section id="screen-game-board" class="game-screen-full">
+            <!-- الهيدر العلوي للعبة -->
+            <div class="game-header">
+                <button class="btn-back-icon" onclick="confirmExitGame()">↩ خروج</button>
+                <div class="level-badge" id="board-level-badge">المستوى الأول</div>
+                <div class="game-status-text" id="game-status-message">يوسف يستعد للعب...</div>
+            </div>
+
+            <!-- مساحة سباق الأسئلة (المستوى الثالث) - تظهر فقط في المستوى 3 -->
+            <div id="quiz-section-container" class="quiz-container-overlay" style="display: none;">
+                <div class="quiz-timer-bar">
+                    <div id="quiz-timer-fill" style="width: 100%;"></div>
+                </div>
+                <div class="quiz-question-box">
+                    <h3 id="quiz-question-text">ما هي عاصمة جمهورية مصر العربية؟</h3>
+                </div>
+                <div class="quiz-options-grid">
+                    <button class="quiz-option-btn" id="opt-0" onclick="submitAnswer(0)">القاهرة</button>
+                    <button class="quiz-option-btn" id="opt-1" onclick="submitAnswer(1)">الإسكندرية</button>
+                    <button class="quiz-option-btn" id="opt-2" onclick="submitAnswer(2)">الجيزة</button>
+                    <button class="quiz-option-btn" id="opt-3" onclick="submitAnswer(3)">أسوان</button>
+                </div>
+            </div>
+
+            <!-- لوحة السباق البصرية (Paths Area) -->
+            <div class="race-tracks-container" id="race-tracks-area">
+                <!-- سيتم ملء المسارات واللاعبين ديناميكياً بـ SVGs -->
+            </div>
+
+            <!-- لوحة التحكم السفلية (رمي النرد) - تختفي في المستوى الثالث -->
+            <div class="game-controls-bar" id="game-controls-bar">
+                <div class="current-turn-info">
+                    <div id="active-player-avatar" class="mini-avatar"></div>
+                    <span id="active-player-name-display">دور: يوسف</span>
+                </div>
+                
+                <!-- نرد الحظ -->
+                <div class="dice-wrapper">
+                    <div id="dice-element" class="dice" onclick="rollDice()">
+                        <div class="dice-face face-1">⚀</div>
+                        <div class="dice-face face-2">⚁</div>
+                        <div class="dice-face face-3">⚂</div>
+                        <div class="dice-face face-4">⚃</div>
+                        <div class="dice-face face-5">⚄</div>
+                        <div class="dice-face face-6">⚅</div>
+                    </div>
+                </div>
+
+                <div class="dice-status">
+                    <button id="btn-roll-dice" class="btn btn-primary" onclick="rollDice()">ارمِ النرد 🎲</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= شاشة إدارة الأسئلة ================= -->
+        <section id="screen-question-manager" class="game-screen">
+            <h2 class="screen-title">📝 إدارة وحفظ الأسئلة</h2>
+            
+            <div class="qm-container">
+                <!-- يمين: إنشاء وإضافة أسئلة -->
+                <div class="qm-section">
+                    <h3>إنشاء حزمة أسئلة جديدة</h3>
+                    <div class="form-inline">
+                        <input type="text" id="new-set-name" placeholder="اسم الحزمة (مثلاً: أبطال الحساب)">
+                        <button class="btn btn-success" onclick="createNewQuestionSet()">إنشاء الحزمة</button>
+                    </div>
+                </div>
+
+                <hr class="divider">
+
+                <!-- إدارة الحزمة المفتوحة حالياً -->
+                <div class="qm-section" id="active-set-section" style="display: none;">
+                    <h3 id="active-set-title">الحزمة النشطة: </h3>
+                    
+                    <div class="question-form">
+                        <h4>إضافة سؤال جديد:</h4>
+                        <div class="form-group">
+                            <input type="text" id="q-text" placeholder="نص السؤال (مثال: 5 + 3 = ؟)">
+                        </div>
+                        <div class="options-inputs">
+                            <input type="text" id="q-opt-0" placeholder="الخيار الأول (الإجابة)">
+                            <input type="text" id="q-opt-1" placeholder="الخيار الثاني">
+                            <input type="text" id="q-opt-2" placeholder="الخيار الثالث">
+                            <input type="text" id="q-opt-3" placeholder="الخيار الرابع">
+                        </div>
+                        <div class="form-group">
+                            <label>الخيار الصحيح:</label>
+                            <select id="q-correct-idx">
+                                <option value="0">الخيار الأول</option>
+                                <option value="1">الخيار الثاني</option>
+                                <option value="2">الخيار الثالث</option>
+                                <option value="3">الخيار الرابع</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-secondary btn-block" onclick="addQuestionToActiveSet()">إضافة السؤال للحزمة ➕</button>
+                    </div>
+
+                    <div class="questions-list-container">
+                        <h4>الأسئلة الحالية في هذه الحزمة:</h4>
+                        <div class="questions-list" id="active-set-questions-list">
+                            <!-- سيتم عرض الأسئلة هنا -->
+                        </div>
+                    </div>
+                </div>
+
+                <hr class="divider">
+
+                <!-- اليسار: قائمة الحزم المحفوظة -->
+                <div class="qm-section">
+                    <h3>حزم الأسئلة المحفوظة لديك:</h3>
+                    <div id="saved-sets-list" class="saved-sets-list">
+                        <!-- تملأ ديناميكياً من LocalStorage -->
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn btn-danger btn-block" onclick="showScreen('screen-main-menu')" style="margin-top: 15px;">عودة للقائمة الرئيسية</button>
+        </section>
+
+        <!-- ================= شاشة إعلان الفائز (Game Over) ================= -->
+        <section id="screen-game-over" class="game-screen">
+            <h1 class="victory-title">👑 البطل الفائز 👑</h1>
+            
+            <div class="winner-card">
+                <div class="winner-avatar-wrapper">
+                    <div id="winner-avatar-display" class="winner-avatar"></div>
+                </div>
+                <h2 id="winner-name-display">أحمد</h2>
+                <p>لقد فاز بالمركز الأول ووصل لخط النهاية بجدارة! 🎉🏆</p>
+            </div>
+
+            <button class="btn btn-success btn-block" onclick="restartGame()">العب مجدداً 🔁</button>
+            <button class="btn btn-danger btn-block" onclick="showScreen('screen-main-menu')">القائمة الرئيسية</button>
+        </section>
+    </div>
+
+    <!-- تأثيرات تساقط أوراق الفرح (Confetti Canvas) -->
+    <canvas id="confetti-canvas"></canvas>
+
+    <!-- ملفات الجافا سكريبت الخاصة بمنطق اللعبة والاتصال -->
+    <script src="app.js"></script>
+    <script src="multiplayer.js"></script>
+</body>
+</html>
